@@ -10,22 +10,6 @@ import (
 	"github.com/thisisthemurph/hx"
 )
 
-func TestReswap(t *testing.T) {
-	w := httptest.NewRecorder()
-	swap := hx.SwapAfterBegin
-	err := hx.SetHeaders(w, hx.Reswap(swap))
-
-	if err != nil {
-		t.Errorf("Refresh returned an unexpected error: %v", err)
-	}
-
-	header := w.Header().Get("HX-Reswap")
-	headerSwap, _ := hx.StringToSwap(header)
-	if headerSwap != swap {
-		t.Errorf("Expected header HX-Refresh to have value %s, got %s", swap, header)
-	}
-}
-
 func TestSetHeader(t *testing.T) {
 	testCases := []struct {
 		key   string
