@@ -102,6 +102,18 @@ func TestTrigger_RetainsPreviousEvents(t *testing.T) {
 
 }
 
+func TestTrigger_UsesEventWithDetailIfExistingEventsAreJSON(t *testing.T) {
+	w := httptest.NewRecorder()
+	w.Header().Set(hx.HeaderTrigger, "{\"msg\":\"some message\"}")
+
+	fn := hx.Trigger("new-event")
+	err := fn(w)
+
+	expectedHeaderValue := "{\"msg\":\"some message\",\"new-event\":null}"
+	assert.NoError(t, err)
+	assert.JSONEq(t, expectedHeaderValue, w.Header().Get(hx.HeaderTrigger))
+}
+
 func TestTriggerWithDetail(t *testing.T) {
 	testCases := []struct {
 		name   string
