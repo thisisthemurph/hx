@@ -3,6 +3,14 @@ package hx
 import "fmt"
 
 const (
+	HeaderLocation           = "HX-Location"             // HX-Location allows you to do a client-side redirect that does not do a full page reload.
+	HeaderPushURL            = "HX-Push-Url"             // HX-Push-Url pushes a new url into the history stack.
+	HeaderRedirect           = "HX-Redirect"             // HX-Redirect can be used to do a client-side redirect to a new location.
+	HeaderRefresh            = "HX-Refresh"              // HX-Refresh if set to “true” the client-side will do a full refresh of the page.
+	HeaderReplaceURL         = "HX-Replace-Url"          // HX-Replace-Url replaces the current URL in the location bar.
+	HeaderReswap             = "HX-Reswap"               // HX-Reswap allows you to specify how the response will be swapped. See hx-swap for possible values.
+	HeaderRetarget           = "HX-Retarget"             // HX-Retarget sets a CSS selector that updates the target of the content update to a different element on the page.
+	HeaderReselect           = "HX-Reselect"             // HX-Reselect sets a CSS selector that allows you to choose which part of the response is used to be swapped in. Overrides an existing hx-select on the triggering element.
 	HeaderTrigger            = "HX-Trigger"              // HX-Trigger header triggers events as soon as the response is received.
 	HeaderTriggerAfterSettle = "HX-Trigger-After-Settle" // HX-Trigger-After-Settle triggers events after the settle step.
 	HeaderTriggerAfterSwap   = "HX-Trigger-After-Swap"   // HX-Trigger-After-Swap triggers events after the swap step.

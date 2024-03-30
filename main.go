@@ -64,13 +64,13 @@ func SetHeader(key, value string) HeaderDecorator {
 //
 // Never returns an error.
 func Location(location string) HeaderDecorator {
-	return SetHeader("HX-Location", location)
+	return SetHeader(HeaderLocation, location)
 }
 
 // PushURL pushes a new url into the history stack.
 // https://htmx.org/headers/hx-push-url/
 func PushURL(url string) HeaderDecorator {
-	return SetHeader("HX-Push-Url", url)
+	return SetHeader(HeaderPushURL, url)
 }
 
 // PreventPushURL prevents the browser’s history from being updated by setting the HX-Push-Url header to "false".
@@ -84,26 +84,26 @@ func PreventPushURL() HeaderDecorator {
 //
 // Never returns an error.
 func Redirect(path string) HeaderDecorator {
-	return SetHeader("HX-Redirect", path)
+	return SetHeader(HeaderRedirect, path)
 }
 
 // Refresh forces the client-side to do a full refresh of the page.
 // https://htmx.org/reference/#response_headers
 func Refresh() HeaderDecorator {
-	return SetHeader("HX-Refresh", "true")
+	return SetHeader(HeaderRefresh, "true")
 }
 
 // PreventRefresh prevents the client-side from doing a full refresh of the page by setting
 // the HX-Refresh header to "false".
 // https://htmx.org/reference/#response_headers
 func PreventRefresh() HeaderDecorator {
-	return SetHeader("HX-Refresh", "false")
+	return SetHeader(HeaderRefresh, "false")
 }
 
 // ReplaceURL replaces the current URL in the location bar.
 // https://htmx.org/headers/hx-replace-url/
 func ReplaceURL(url string) HeaderDecorator {
-	return SetHeader("HX-Replace-Url", url)
+	return SetHeader(HeaderReplaceURL, url)
 }
 
 // PreventReplaceURL prevents replacing the current URL in the location bar by setting the
@@ -119,7 +119,7 @@ func PreventReplaceURL() HeaderDecorator {
 //
 // Never returns an error.
 func Reselect(selector string) HeaderDecorator {
-	return SetHeader("HX-Reselect", selector)
+	return SetHeader(HeaderReselect, selector)
 }
 
 // Reswap allows you to override how the response will be swapped.
@@ -127,7 +127,7 @@ func Reselect(selector string) HeaderDecorator {
 //
 // Never returns an error.
 func Reswap(swap Swap) HeaderDecorator {
-	return SetHeader("HX-Reswap", swap.String())
+	return SetHeader(HeaderReswap, swap.String())
 }
 
 // Retarget a CSS selector that overrides the target of the content update to
@@ -135,7 +135,7 @@ func Reswap(swap Swap) HeaderDecorator {
 //
 // Never returns an error.
 func Retarget(target string) HeaderDecorator {
-	return SetHeader("HX-Retarget", target)
+	return SetHeader(HeaderRetarget, target)
 }
 
 // Trigger can be used to trigger client side actions on the target element within a response to HTMX.
