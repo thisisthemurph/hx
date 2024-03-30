@@ -2,6 +2,12 @@ package hx
 
 import "fmt"
 
+const (
+	HeaderTrigger            = "HX-Trigger"              // HX-Trigger header triggers events as soon as the response is received.
+	HeaderTriggerAfterSettle = "HX-Trigger-After-Settle" // HX-Trigger-After-Settle triggers events after the settle step.
+	HeaderTriggerAfterSwap   = "HX-Trigger-After-Swap"   // HX-Trigger-After-Swap triggers events after the swap step.
+)
+
 // Swap represents the type of content swap method used in HTMX.
 // It enumerates different ways in which content can be swapped on the client-side
 // without a full page reload. Each swap method has its own meaning and effect
@@ -75,29 +81,6 @@ func SwapFromString(s string) (Swap, error) {
 // along with an error indicating the invalid string value.
 func StringToSwap(s string) (Swap, error) {
 	return SwapFromString(s)
-}
-
-// TriggerHeader allows distinguishing between different types of trigger headers.
-// https://htmx.org/headers/hx-trigger/
-type TriggerHeader int
-
-const (
-	TriggerImmediately TriggerHeader = iota // HX-Trigger header triggers events as soon as the response is received.
-	TriggerAfterSettle                      // HX-Trigger-After-Settle triggers events after the settle step.
-	TriggerAfterSwap                        // HX-Trigger-After-Swap triggers events after the swap step.
-)
-
-// String returns the name of the header associated with when the event should be triggered.
-// Possible values are HX-Trigger, HX-Trigger-After-Settle, and HX-Trigger-After-Swap.
-func (td TriggerHeader) String() string {
-	switch td {
-	case 1:
-		return "HX-Trigger-After-Settle"
-	case 2:
-		return "HX-Trigger-After-Swap"
-	default:
-		return "HX-Trigger"
-	}
 }
 
 // TriggerEvent represents an event to be added to one of the following trigger headers:

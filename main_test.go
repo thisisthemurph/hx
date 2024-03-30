@@ -62,25 +62,24 @@ func TestSetHeader(t *testing.T) {
 func TestTrigger(t *testing.T) {
 	w := httptest.NewRecorder()
 
-	fn := hx.Trigger(hx.TriggerAfterSwap, "event1", "event2")
+	fn := hx.Trigger("event1", "event2")
 	err := fn(w)
 
-	headerValue := w.Header().Get(hx.TriggerAfterSwap.String())
+	headerValue := w.Header().Get("HX-Trigger")
 	assert.NoError(t, err)
 	assert.Equal(t, "event1, event2", headerValue)
 
 	// Ensure previous headers are not overwritten
-	fn = hx.Trigger(hx.TriggerAfterSwap, "event3")
+	fn = hx.Trigger("event3")
 	err = fn(w)
 
-	headerValue = w.Header().Get(hx.TriggerAfterSwap.String())
+	headerValue = w.Header().Get("HX-Trigger")
 	assert.NoError(t, err)
 	assert.Equal(t, "event1, event2, event3", headerValue)
 }
 
 func TestTrigger_RetainsPreviousEvents(t *testing.T) {
 	testCases := []struct {
-		name           string
 		previousHeader string
 		events         []string
 		expected       string
@@ -113,13 +112,13 @@ func TestTrigger_RetainsPreviousEvents(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			if tc.previousHeader != "" {
-				w.Header().Set(hx.TriggerAfterSwap.String(), tc.previousHeader)
+				w.Header().Set("HX-Trigger", tc.previousHeader)
 			}
 
-			fn := hx.Trigger(hx.TriggerAfterSwap, tc.events...)
+			fn := hx.Trigger(tc.events...)
 			err := fn(w)
 
-			headerValue := w.Header().Get(hx.TriggerAfterSwap.String())
+			headerValue := w.Header().Get("HX-Trigger")
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, headerValue)
 		})
@@ -130,18 +129,15 @@ func TestTrigger_RetainsPreviousEvents(t *testing.T) {
 func TestTriggerWithDetail(t *testing.T) {
 	testCases := []struct {
 		name   string
-		when   hx.TriggerHeader
 		events []hx.TriggerEvent
 	}{
 		{
 			name: "with string detail",
-			when: hx.TriggerAfterSettle,
 			events: []hx.TriggerEvent{
 				hx.NewTriggerEvent("stringEvent", "event1-detail"),
 			},
 		}, {
 			name: "with struct detail",
-			when: hx.TriggerAfterSwap,
 			events: []hx.TriggerEvent{
 				hx.NewTriggerEvent(
 					"structEvent",
@@ -156,13 +152,11 @@ func TestTriggerWithDetail(t *testing.T) {
 			},
 		}, {
 			name: "with slice detail",
-			when: hx.TriggerAfterSwap,
 			events: []hx.TriggerEvent{
 				hx.NewTriggerEvent("sliceEvent", []string{"a", "b", "c"}),
 			},
 		}, {
 			name: "with multiple events",
-			when: hx.TriggerImmediately,
 			events: []hx.TriggerEvent{
 				{
 					Name: "event1",
@@ -191,7 +185,7 @@ func TestTriggerWithDetail(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			w := httptest.NewRecorder()
 
-			fn := hx.TriggerWithDetail(tc.when, tc.events...)
+			fn := hx.TriggerWithDetail(tc.events...)
 			err := fn(w)
 
 			expectedMap := make(map[string]any)
@@ -200,7 +194,7 @@ func TestTriggerWithDetail(t *testing.T) {
 			}
 			expectedJSON, _ := json.Marshal(expectedMap)
 
-			headerValue := w.Header().Get(tc.when.String())
+			headerValue := w.Header().Get("HX-Trigger")
 			assert.NoError(t, err)
 			assert.JSONEq(t, string(expectedJSON), headerValue)
 
@@ -213,16 +207,15 @@ func TestTriggerWithDetail(t *testing.T) {
 				})
 			}
 
-			fn = hx.TriggerWithDetail(tc.when, newEvents...)
+			fn = hx.TriggerWithDetail(newEvents...)
 			err = fn(w)
 
-			// expectedMap = make(map[string]any)
 			for _, ev := range newEvents {
 				expectedMap[ev.Name] = ev.Detail
 			}
 			expectedJSON, _ = json.Marshal(expectedMap)
 
-			headerValue = w.Header().Get(tc.when.String())
+			headerValue = w.Header().Get("HX-Trigger")
 			assert.NoError(t, err)
 			assert.JSONEq(t, string(expectedJSON), headerValue)
 		})
@@ -232,13 +225,13 @@ func TestTriggerWithDetail(t *testing.T) {
 func TestTriggerWithDetail_RetainsEventsIfAlreadyPresent(t *testing.T) {
 	w := httptest.NewRecorder()
 	existingEventJSON := "{\"event1\":{\"msg\":\"this is only a test\"}}"
-	w.Header().Set(hx.TriggerImmediately.String(), existingEventJSON)
+	w.Header().Set(hx.HeaderTrigger, existingEventJSON)
 
 	event := hx.NewTriggerEvent("event2", "event2-data")
-	fn := hx.TriggerWithDetail(hx.TriggerImmediately, event)
+	fn := hx.TriggerWithDetail(event)
 	err := fn(w)
 
-	headerValue := w.Header().Get(hx.TriggerImmediately.String())
+	headerValue := w.Header().Get("HX-Trigger")
 	expectedHeaderValue := "{\"event1\":{\"msg\":\"this is only a test\"},\"event2\":\"event2-data\"}"
 
 	assert.NoError(t, err)
@@ -249,7 +242,7 @@ func TestTriggerWithDetail_RetainsEventsIfAlreadyPresent(t *testing.T) {
 func TestTriggerWithDetail_ConvertsEventNamesIfAlreadyPresent(t *testing.T) {
 	// Setup
 	w := httptest.NewRecorder()
-	w.Header().Set(hx.TriggerImmediately.String(), "event1, event2, event3")
+	w.Header().Set("HX-Trigger", "event1, event2, event3")
 
 	event := hx.TriggerEvent{
 		Name:   "event4",
@@ -257,11 +250,11 @@ func TestTriggerWithDetail_ConvertsEventNamesIfAlreadyPresent(t *testing.T) {
 	}
 
 	// Act
-	fn := hx.TriggerWithDetail(hx.TriggerImmediately, event)
+	fn := hx.TriggerWithDetail(event)
 	err := fn(w)
 
 	// Assert
-	headerValue := w.Header().Get(hx.TriggerImmediately.String())
+	headerValue := w.Header().Get("HX-Trigger")
 	expectedJSON := "{\"event1\":null,\"event2\":null,\"event3\":null,\"event4\":\"this is the detail\"}"
 	assert.NoError(t, err)
 	assert.JSONEq(t, expectedJSON, headerValue)

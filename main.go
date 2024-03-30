@@ -155,25 +155,25 @@ func Retarget(target string) HeaderDecorator {
 //
 // Parameters:
 //
-//	when: TriggerHeader - Specifies which header should be used to trigger the event.
+//	header: string - Specifies which header should be used to trigger the event.
 //	eventNames: ...string - Uniquely named events to be triggered.
 //
 // Example usage:
 //
-//	err := hx.SetHeaders(hx.Trigger(hx.TriggerAfterSettle, "myFirstEvent", "someOtherEvent"))
+//	err := hx.SetHeaders(hx.trigger(hx.HeaderTrigger, "myFirstEvent", "someOtherEvent"))
 //
 // Or passing a slice of events:
 //
 //	events := []string {"event1", "event2"}
-//	err := hx.SetHeaders(hx.Trigger(hx.TriggerAfterSwap, events...))
+//	err := hx.SetHeaders(hx.trigger(hx.TriggerAfterSwap, events...))
 //
 // https://htmx.org/headers/hx-trigger/
-func Trigger(when TriggerHeader, eventNames ...string) HeaderDecorator {
+func trigger(header string, eventNames ...string) HeaderDecorator {
 	return func(w HeaderResponseWriter) error {
 		// eventMap := make(map[string]string)
 		eventList := make([]string, 0)
 
-		currentHeaderValues := w.Header().Get(when.String())
+		currentHeaderValues := w.Header().Get(header)
 		if currentHeaderValues != "" {
 			// If header has JSON data, the current event names must also be added as JSON.
 			// Default to using the TriggerWithDetail function.
@@ -188,7 +188,7 @@ func Trigger(when TriggerHeader, eventNames ...string) HeaderDecorator {
 					})
 				}
 
-				return TriggerWithDetail(when, events...)(w)
+				return triggerWithDetail(header, events...)(w)
 			}
 
 			// If the data is not JSON, we must maintain the data and append the new
@@ -201,12 +201,84 @@ func Trigger(when TriggerHeader, eventNames ...string) HeaderDecorator {
 			eventList = append(eventList, strings.TrimSpace(eventName))
 		}
 
-		w.Header().Set(when.String(), strings.Join(eventList, ", "))
+		w.Header().Set(header, strings.Join(eventList, ", "))
 		return nil
 	}
 }
 
-// TriggerWithDetail can be used to trigger client side actions on the target element within a response to HTMX.
+// Trigger sets the HX-Trigger header with the given event names to trigger client side
+// actions on the front end.
+//
+// You can trigger a single event or as many uniquely named events as you would like.
+//
+// If the HX-Trigger header already includes events, these will be retained.
+// If the header value is a list of comma separated strings, these will be converted to
+// JSON objects with null detail.
+//
+// The returned function will return an error if the provided detail cannot be serialized into JSON.
+//
+// Parameters:
+//
+//	eventNames: ...string - Uniquely named events to be triggered.
+//
+// Example usage:
+//
+//	err := hx.SetHeaders(hx.Trigger("event1", "event2"))
+//
+// https://htmx.org/headers/hx-trigger/
+func Trigger(eventNames ...string) HeaderDecorator {
+	return trigger(HeaderTrigger, eventNames...)
+}
+
+// TriggerAfterSwap sets the HX-Trigger-After-Swap header with the given event names to trigger client side
+// actions on the front end.
+//
+// You can trigger a single event or as many uniquely named events as you would like.
+//
+// If the HX-Trigger-After-Swap header already includes events, these will be retained.
+// If the header value is a list of comma separated strings, these will be converted to
+// JSON objects with null detail.
+//
+// The returned function will return an error if the provided detail cannot be serialized into JSON.
+//
+// Parameters:
+//
+//	eventNames: ...string - Uniquely named events to be triggered.
+//
+// Example usage:
+//
+//	err := hx.SetHeaders(hx.TriggerAfterSwap("event1", "event2"))
+//
+// https://htmx.org/headers/hx-trigger/
+func TriggerAfterSwap(eventNames ...string) HeaderDecorator {
+	return trigger(HeaderTriggerAfterSwap, eventNames...)
+}
+
+// TriggerAfterSwap sets the HX-Trigger-After-Settle header with the given event names to trigger client side
+// actions on the front end.
+//
+// You can trigger a single event or as many uniquely named events as you would like.
+//
+// If the HX-Trigger-After-Settle header already includes events, these will be retained.
+// If the header value is a list of comma separated strings, these will be converted to
+// JSON objects with null detail.
+//
+// The returned function will return an error if the provided detail cannot be serialized into JSON.
+//
+// Parameters:
+//
+//	eventNames: ...string - Uniquely named events to be triggered.
+//
+// Example usage:
+//
+//	err := hx.SetHeaders(hx.TriggerAfterSettle("event1", "event2"))
+//
+// https://htmx.org/headers/hx-trigger/
+func TriggerAfterSettle(eventNames ...string) HeaderDecorator {
+	return trigger(HeaderTriggerAfterSettle, eventNames...)
+}
+
+// triggerWithDetail can be used to trigger client side actions on the target element within a response to HTMX.
 // You can trigger a single event or as many uniquely named events as you would like.
 //
 // The header is determined by the value of the when parameter.
@@ -223,19 +295,19 @@ func Trigger(when TriggerHeader, eventNames ...string) HeaderDecorator {
 //
 // Parameters:
 //
-//	when: TriggerHeader - Specifies which header should be used to trigger the event.
+//	header: string - Specifies which header should be used to trigger the event.
 //	events: ...TriggerEvent - The events (name and detail) to be triggered.
 //
 // Example usage:
 //
 //	event := hx.NewTriggerEvent("eventName", myStruct)
-//	err := hx.SetHeaders(hx.Trigger(hx.TriggerAfterSettle, event))
+//	err := hx.SetHeaders(hx.triggerWithDetail(hx.HeaderTrigger, event))
 //
 // https://htmx.org/headers/hx-trigger/
-func TriggerWithDetail(when TriggerHeader, events ...TriggerEvent) HeaderDecorator {
+func triggerWithDetail(header string, events ...TriggerEvent) HeaderDecorator {
 	return func(w HeaderResponseWriter) error {
 		triggerEvents := make(map[string]any)
-		currentHeaderValue := w.Header().Get(when.String())
+		currentHeaderValue := w.Header().Get(header)
 
 		// If the header already has events present, we want to maintain these.
 		if currentHeaderValue != "" {
@@ -251,7 +323,6 @@ func TriggerWithDetail(when TriggerHeader, events ...TriggerEvent) HeaderDecorat
 			}
 		}
 
-		// var triggerEvents = make(map[string]any)
 		for _, event := range events {
 			triggerEvents[event.Name] = event.Detail
 		}
@@ -261,7 +332,82 @@ func TriggerWithDetail(when TriggerHeader, events ...TriggerEvent) HeaderDecorat
 			return err
 		}
 
-		w.Header().Set(when.String(), string(data))
+		w.Header().Set(header, string(data))
 		return nil
 	}
+}
+
+// TriggerWithDetail sets the HX-Trigger header with the given TriggerEvent to trigger client side
+// actions on the front end.
+//
+// You can trigger a single event or as many uniquely named events as you would like.
+//
+// If the HX-Trigger header already includes events, these will be retained.
+// If the header value is a list of comma separated strings, these will be converted to
+// JSON objects with null detail.
+//
+// The returned function will return an error if the provided detail cannot be serialized into JSON.
+//
+// Parameters:
+//
+//	events: ...TriggerEvent - The events (name and detail) to be triggered.
+//
+// Example usage:
+//
+//	event := hx.NewTriggerEvent("eventName", myStruct)
+//	err := hx.SetHeaders(hx.TriggerWithDetail(event))
+//
+// https://htmx.org/headers/hx-trigger/
+func TriggerWithDetail(events ...TriggerEvent) HeaderDecorator {
+	return triggerWithDetail(HeaderTrigger, events...)
+}
+
+// TriggerAfterSettleWithDetail sets the HX-Trigger-After-Settle header with the given TriggerEvent
+// to trigger client side actions on the front end.
+//
+// You can trigger a single event or as many uniquely named events as you would like.
+//
+// If the HX-Trigger-After-Target header already includes events, these will be retained.
+// If the header value is a list of comma separated strings, these will be converted to
+// JSON objects with null detail.
+//
+// The returned function will return an error if the provided detail cannot be serialized into JSON.
+//
+// Parameters:
+//
+//	events: ...TriggerEvent - The events (name and detail) to be triggered.
+//
+// Example usage:
+//
+//	event := hx.NewTriggerEvent("eventName", myStruct)
+//	err := hx.SetHeaders(hx.TriggerAfterSettleWithDetail(event))
+//
+// https://htmx.org/headers/hx-trigger/
+func TriggerAfterSettleWithDetail(events ...TriggerEvent) HeaderDecorator {
+	return triggerWithDetail(HeaderTriggerAfterSettle, events...)
+}
+
+// TriggerAfterSwapWithDetail sets the HX-Trigger-After-Swap header with the given TriggerEvent
+// to trigger client side actions on the front end.
+//
+// You can trigger a single event or as many uniquely named events as you would like.
+//
+// If the HX-Trigger-After-Swap header already includes events, these will be retained.
+// If the header value is a list of comma separated strings, these will be converted to
+// JSON objects with null detail.
+//
+// The returned function will return an error if the provided detail cannot be serialized into JSON.
+//
+// Parameters:
+//
+//	events: ...TriggerEvent - The events (name and detail) to be triggered.
+//
+// Example usage:
+//
+//	event := hx.NewTriggerEvent("eventName", myStruct)
+//	err := hx.SetHeaders(hx.TriggerAfterSwapWithDetail(event))
+//
+// https://htmx.org/headers/hx-trigger/
+func TriggerAfterSwapWithDetail(events ...TriggerEvent) HeaderDecorator {
+	return triggerWithDetail(HeaderTriggerAfterSwap, events...)
 }
