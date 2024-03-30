@@ -52,14 +52,6 @@ func TestTrigger(t *testing.T) {
 	headerValue := w.Header().Get("HX-Trigger")
 	assert.NoError(t, err)
 	assert.Equal(t, "event1, event2", headerValue)
-
-	// Ensure previous headers are not overwritten
-	fn = hx.Trigger("event3")
-	err = fn(w)
-
-	headerValue = w.Header().Get("HX-Trigger")
-	assert.NoError(t, err)
-	assert.Equal(t, "event1, event2, event3", headerValue)
 }
 
 func TestTrigger_RetainsPreviousEvents(t *testing.T) {
