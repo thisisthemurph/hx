@@ -4,7 +4,7 @@ A Go package for working with HTMX.
 
 Currently implements helper functions for working with HTMX response headers.
 
-## Examples
+## HTMX Headers
 
 The primary method for setting HTMX headers is the `SetHeaders` function.
 This function takes the response writer and any number of utility functions for setting HTMX headers.
@@ -51,4 +51,97 @@ The following example shows how the latter three functions can be used:
 ```go
 event := hx.NewTriggerEvent("event1", myStruct)
 err := hx.SetHeaders(w, hx.TriggerWithDetail(event))
+```
+
+## HTMX Request Headers Middleware
+
+If you would like to easily access the HTMX request headers, this can be done simply with the provided middleware.
+
+```go
+package main
+
+import (
+    "myproject/handler"
+    "github.com/thisisthemurph/hx/middleware"
+)
+
+
+func main() {
+    mux := http.NewServerMux()
+    mux.Handle("/", middleware.WithHTMX(http.HandlerFunc(handler.LoginHandler)))
+
+    http.ListenAndServe(":8080", mux)
+}
+```
+
+In your handler you can access the HTMX request headers like so:
+
+```go
+package handler
+
+import (
+    "fmt"
+    "github.com/thisisthemurph/hx/middleware"
+)
+
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+    h, ok := middleware.GetRequestHeaders(r)
+    if !ok {
+        // This should should only happen if the middleware has not been configured
+    }
+
+    if h.IsHTMXRequest {
+        fmt.Println("Hello HTMX!")
+        fmt.Printf("The current URL is %s\n", h.CurrentURL)
+    } else {
+        fmt.Println("Hello standard request...")
+    }
+}
+```
+
+### Using a third-party framework such as Echo?
+
+Using a third-party framework other than the standard library is as you would expect. The only difference is that the framework you are using may have a different method of setting up middleware and accessing the request. The following example demonstrates use with the Echo framework, but you should be able to figure out how to use this with your framework of choice.
+
+```go
+package main
+
+import (
+    "github.com/labstack/echo/v4"
+    "github.com/thisisthemurph/hx/middleware"
+)
+
+func main() {
+    e := echo.New()
+    e.Use(middleware.WithHTMX)
+    e.GET("/", handler.LoginHandler)
+
+    e.start(":8080")
+}
+```
+
+In your handler you can access the HTMX request headers like so:
+
+```go
+package handler
+
+import (
+    "fmt"
+    "github.com/labstack/echo/v4"
+    "github.com/thisisthemurph/hx/middleware"
+)
+
+func LoginHandler(c echo.Context) error {
+    h, ok := middleware.GetRequestHeaders(c.Request())
+    if !ok {
+        // This should should only happen if the middleware has not been configured
+    }
+
+    if h.IsHTMXRequest {
+        fmt.Println("Hello HTMX!")
+        fmt.Printf("The current URL is %s\n", h.CurrentURL)
+    } else {
+        fmt.Println("Hello standard request...")
+    }
+}
 ```
